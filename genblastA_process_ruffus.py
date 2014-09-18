@@ -65,12 +65,12 @@ def safe_open(filename, mode='r'):
 	try:
 		file_obj = open(filename, mode)
 	except IOError as e:
-		sys.stderr.write('Failed to open {}: {}'.format(filename, str(e)))
+		logger.error('Failed to open {}: {}'.format(filename, str(e)))
 		sys.exit(1)
 	return file_obj
 
 def merge_gff(infiles, output_file):
-	out_file = safe_open(output_file)
+	out_file = safe_open(output_file,'w')
 	out_file.write('##gff-version 3\n')
 	for input_filename in infiles:
 		in_file = safe_open(input_filename)
