@@ -13,7 +13,7 @@ import logging
 from Bio import SeqIO
 from ruffus import *
 from ruffus.drmaa_wrapper import run_job, error_drmaa_job
-from genblastA_to_gff.genblastA_to_gff3 import genblastA_process
+
 # import Environment Modules stuff
 MODULES_KEY = 'MODULESHOME'
 if MODULES_KEY in os.environ:
@@ -40,6 +40,9 @@ if args.debug:
 else:
 	logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('genblastA_process_ruffus')
+
+sys.path.append(args.scripts_dir) # this is where scripts like genblastA_to_gff are stored
+from genblastA_to_gff.genblastA_to_gff3 import genblastA_process
 
 drmaa_session = None
 if not args.run_local:
