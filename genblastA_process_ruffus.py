@@ -88,7 +88,7 @@ def genblastA_to_gff3(input_file, output_file):
 	out_file = safe_open(output_file, 'w')
 	genblastA_process(in_file, out_file, min_perc_coverage=80.0)
 
-@merge(genblastA_to_gff3, 'genblastA.all.gff3'):
+@merge(genblastA_to_gff3, 'genblastA.all.gff3')
 def merge_genblastA_gff3(infiles, output_file):
 	merge_gff(infiles, output_file)
 
@@ -133,7 +133,7 @@ def run_exonerate(input_file, output_file, genome_filename, query_filename):
 		    working_directory=args.working_directory,
 		    run_locally=args.run_local, logger=logger)
 
-@merge(run_exonerate, 'exonerate.all.gff3'):
+@merge(run_exonerate, 'exonerate.all.gff3')
 def merge_exonerate_gff3(infiles, output_file):
 	merge_gff(infiles, output_file)
 
