@@ -166,7 +166,7 @@ def run_exonerate(input_file, output_file, genome_filename, query_filename):
 def merge_exonerate_gff3(infiles, output_file):
 	merge_gff(infiles, output_file)
 
-@transform(merge_genblastA_gff3,
+@transform(merge_exonerate_gff3,
 	       suffix('.gff3'),
 	       '.log', 'exonerate', args.db_hostname,
 	       args.db_username, args.db_password)
