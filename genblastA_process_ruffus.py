@@ -32,6 +32,9 @@ parser.add_argument('--modules_home', '-M', default='/cip0/software/x86_64/modul
 parser.add_argument('--query_type', default='dna', choices=['dna','protein'], help='exonerate query type (dna or protein)')
 parser.add_argument('--debug', action='store_true', default=False, help='Set log level to DEBUG')
 parser.add_argument('--printout', action='store_true', default=False, help='Print what will be run, but do not run anything')
+parser.add_argument('--db_hostname', '-H', default='localhost', help='Hostname of database to use for bp_seqfeature_load')
+parser.add_argument('--db_username', '-U', required=True, help='Username to log into database for bp_seqfeature_load')
+parser.add_argument('--db_password', '-P', required=True, help='Password to log into database for bp_seqfeature_load')
 parser.add_argument('genome_filename', help='FASTA format genome file, must end in .fa or .fasta')
 parser.add_argument('query_filename', help='FASTA format file of query sequences, must end in .fa or .fasta')
 args = parser.parse_args()
@@ -85,6 +88,20 @@ def merge_gff(infiles, output_file):
 		in_file.close()
 	out_file.close()
 
+def bp_seqfeature_load(input_file, output_file, dbname, hostname, username, password):
+	seqfeature_load_cmdline = 'bp_seqfeature_load -f -d "dbi:mysql:database={};host={}" -c -i -u {} -p {} {}'.format(
+		                       dbname, hostname, username, password, input_file)
+	seqfeature_cmd = shlex.split(seqfeature_load_cmdline)
+	proc = Popen(seqfeature_cmd, stdout=PIPE, stderr=PIPE)
+	(output, error) = proc.communicate()
+	retcode = proc.wait()
+	if retcode != 0:
+		raise Exception('bp_seqfeature_load failed: error: {} output: {}'.format(error, output))
+	else:
+		out_file = safe_open(output_file, 'w')
+		out_file.write('output:\n' + output + '\nerror:\n' + error)
+		out_file.close()
+
 @transform(starting_files, 
 			suffix(args.input_pattern),
 			'.genblastA.gff3')
@@ -97,6 +114,13 @@ def genblastA_to_gff3(input_file, output_file):
 def merge_genblastA_gff3(infiles, output_file):
 	merge_gff(infiles, output_file)
 
+@transform(merge_genblastA_gff3,
+	       suffix('.gff3'),
+	       '.log', 'genblastA', args.db_hostname,
+	       args.db_username, args.db_password)
+def load_genblastA_db(input_file, output_file, dbname, hostname, username, password):
+	bp_seqfeature_load(input_file, output_file, dbname, hostname, username, password)
+
 @transform(args.genome_filename,
 	       regex(FASTA_RE),
 	       '.2bit')
@@ -107,7 +131,7 @@ def make_twobit(input_file, output_file):
 	(output, error) = proc.communicate()
 	retcode = proc.wait()
 	if (retcode != 0):
-		sys.stderr.write('Failed to run faToTwoBit (cmdline: {}): output:\n{}\nerror:{}\n'.format(cmdline, output, error))
+		raise Exception('Failed to run faToTwoBit (cmdline: {}): output:\n{}\nerror:{}\n'.format(cmdline, output, error))
 
 @transform(args.query_filename,
 	       regex(FASTA_RE),
@@ -142,13 +166,20 @@ def run_exonerate(input_file, output_file, genome_filename, query_filename):
 def merge_exonerate_gff3(infiles, output_file):
 	merge_gff(infiles, output_file)
 
+@transform(merge_genblastA_gff3,
+	       suffix('.gff3'),
+	       '.log', 'exonerate', args.db_hostname,
+	       args.db_username, args.db_password)
+def load_exonerate_db(input_file, output_file, dbname, hostname, username, password):
+	bp_seqfeature_load(input_file, output_file, dbname, hostname, username, password)
+
 if args.printout:
 	pipeline_printout()
 	pipeline_printout_graph('exonerate_ruffus.jpg', output_format='jpg', pipeline_name='Exonerate')
 else:
-	pipeline_run([merge_genblastA_gff3], multiprocess=args.num_threads)
+	pipeline_run([load_genblastA_db], multiprocess=args.num_threads)
 	# can't use multithread with a DRMAA task, causes script to hang
-	pipeline_run([merge_exonerate_gff3], multithread=args.num_threads)
+	pipeline_run([load_exonerate_db], multithread=args.num_threads)
 
 if not args.run_local:
 	drmaa_session.exit()
