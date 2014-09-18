@@ -31,6 +31,7 @@ parser.add_argument('--scripts_dir', '-S', default='/cip0/research/pvh/software/
 parser.add_argument('--modules_home', '-M', default='/cip0/software/x86_64/modules/Modules/3.2.9', help='Value of Environment Modules MODULESHOME env variable')
 parser.add_argument('--query_type', default='dna', choices=['dna','protein'], help='exonerate query type (dna or protein)')
 parser.add_argument('--debug', action='store_true', default=False, help='Set log level to DEBUG')
+parser.add_argument('--printout', action='store_true', default=False, help='Print what will be run, but do not run anything')
 parser.add_argument('genome_filename', help='FASTA format genome file, must end in .fa or .fasta')
 parser.add_argument('query_filename', help='FASTA format file of query sequences, must end in .fa or .fasta')
 args = parser.parse_args()
@@ -116,7 +117,11 @@ def run_exonerate(input_file, output_file, genome_filename, query_filename):
 		    working_directory=args.working_directory,
 		    run_locally=args.run_local, logger=logger)
 
-pipeline_run(multiprocess=args.num_threads)
+if args.printout:
+	pipeline_printout()
+	pipeline_printout_graph('exonerate_ruffus.jpg', output_format='jpg', pipeline_name='Exonerate')
+else:
+	pipeline_run(multiprocess=args.num_threads)
 
 if not args.run_local:
 	drmaa_session.exit()
