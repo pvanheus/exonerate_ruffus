@@ -76,6 +76,11 @@ def merge_gff(infiles, output_file):
 		in_file = safe_open(input_filename)
 		first_line = in_file.readline() # discard 
 		assert first_line.startswith('##gff-version'), "Invalid GFF header in {}\n".format(input_filename)
+		line = in_file.readline()
+		while line.startswith('#'):
+			line = in_file.readline()
+		# we've now skipped over all the header lines in the input GFF3, so line holds a non-header line
+		out_file.write(line)
 		out_file.write(in_file.read()) # write the rest of the input file to the output
 		in_file.close()
 	out_file.close()
