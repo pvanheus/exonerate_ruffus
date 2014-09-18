@@ -69,6 +69,17 @@ def safe_open(filename, mode='r'):
 		sys.exit(1)
 	return file_obj
 
+def merge_gff(infiles, output_file):
+	out_file = safe_open(output_file)
+	out_file.write('##gff-version 3\n')
+	for input_filename in infiles:
+		in_file = safe_open(input_filename)
+		first_line = in_file.readline() # discard 
+		assert first_line.startswidth('##gff-version'), "Invalid GFF header in {}\n".format(input_filename)
+		out_file.write(in_file.read()) # write the rest of the input file to the output
+		in_file.close()
+	out_file.close()
+
 @transform(starting_files, 
 			suffix(args.input_pattern),
 			'.genblastA.gff3')
@@ -76,6 +87,10 @@ def genblastA_to_gff3(input_file, output_file):
 	in_file = safe_open(input_file)
 	out_file = safe_open(output_file, 'w')
 	genblastA_process(in_file, out_file, min_perc_coverage=80.0)
+
+@merge(genblastA_to_gff3, 'genblastA.all.gff3'):
+def merge_genblastA_gff3(infiles, output_file):
+	merge_gff(infiles, output_file)
 
 @transform(args.genome_filename,
 	       regex(FASTA_RE),
@@ -98,6 +113,7 @@ def make_index(input_file, output_file):
 FASTA_RE_COMPILED = re.compile(FASTA_RE)
 PATH_val = os.environ['PATH'] + ':' + os.path.join(args.scripts_dir,'run_est_mapping')
 PYTHONPATH_val = os.path.join(args.scripts_dir, 'lib')
+@follows(make_index, make_twobit)
 @transform(genblastA_to_gff3,
 	       suffix('.genblastA.gff3'),
 	       '.exonerate.gff3',
@@ -117,11 +133,17 @@ def run_exonerate(input_file, output_file, genome_filename, query_filename):
 		    working_directory=args.working_directory,
 		    run_locally=args.run_local, logger=logger)
 
+@merge(run_exonerate, 'exonerate.all.gff3'):
+def merge_exonerate_gff3(infiles, output_file):
+	merge_gff(infiles, output_file)
+
 if args.printout:
 	pipeline_printout()
 	pipeline_printout_graph('exonerate_ruffus.jpg', output_format='jpg', pipeline_name='Exonerate')
 else:
-	pipeline_run(multiprocess=args.num_threads)
+	pipeline_run([merge_genblastA_gff3], multiprocess=args.num_threads)
+	# can't use multithread with a DRMAA task, causes script to hang
+	pipeline_run([merge_exonerate_gff3], multithread=args.num_threads)
 
 if not args.run_local:
 	drmaa_session.exit()
