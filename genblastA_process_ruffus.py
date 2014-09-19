@@ -32,6 +32,7 @@ parser.add_argument('--modules_home', '-M', default='/cip0/software/x86_64/modul
 parser.add_argument('--query_type', default='dna', choices=['dna','protein'], help='exonerate query type (dna or protein)')
 parser.add_argument('--debug', action='store_true', default=False, help='Set log level to DEBUG')
 parser.add_argument('--printout', action='store_true', default=False, help='Print what will be run, but do not run anything')
+parser.add_argument('--db_prefix', default='', help='Prefix to prepend to database names (e.g. project name)')
 parser.add_argument('--db_hostname', '-H', default='localhost', help='Hostname of database to use for bp_seqfeature_load')
 parser.add_argument('--db_username', '-U', required=True, help='Username to log into database for bp_seqfeature_load')
 parser.add_argument('--db_password', '-P', required=True, help='Password to log into database for bp_seqfeature_load')
@@ -116,7 +117,7 @@ def merge_genblastA_gff3(infiles, output_file):
 
 @transform(merge_genblastA_gff3,
 	       suffix('.gff3'),
-	       '.log', 'genblastA', args.db_hostname,
+	       '.log', args.db_prefix+'genblastA', args.db_hostname,
 	       args.db_username, args.db_password)
 def load_genblastA_db(input_file, output_file, dbname, hostname, username, password):
 	bp_seqfeature_load(input_file, output_file, dbname, hostname, username, password)
@@ -168,7 +169,7 @@ def merge_exonerate_gff3(infiles, output_file):
 
 @transform(merge_exonerate_gff3,
 	       suffix('.gff3'),
-	       '.log', 'exonerate', args.db_hostname,
+	       '.log', args.db_prefix+'exonerate', args.db_hostname,
 	       args.db_username, args.db_password)
 def load_exonerate_db(input_file, output_file, dbname, hostname, username, password):
 	bp_seqfeature_load(input_file, output_file, dbname, hostname, username, password)
