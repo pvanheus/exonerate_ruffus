@@ -79,6 +79,9 @@ def merge_gff(infiles, output_file):
 	for input_filename in infiles:
 		in_file = safe_open(input_filename)
 		first_line = in_file.readline() # discard 
+		if first_line == '':
+			# we've got an empty file here
+			continue
 		assert first_line.startswith('##gff-version'), "Invalid GFF header in {}\n".format(input_filename)
 		line = in_file.readline()
 		while line.startswith('#'):
