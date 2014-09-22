@@ -26,6 +26,7 @@ parser = argparse.ArgumentParser(description='Use Ruffus to process .out files f
 parser.add_argument('--input_pattern', '-I', default='.out')
 parser.add_argument('--working_directory', '-W', default='.')
 parser.add_argument('--num_threads', '-N', type=int, default=1)
+parser.add_argument('--num_jobs', '-J', type=int, default=1, help='Number of exonerate jobs to run')
 parser.add_argument('--run_local', '-L', action='store_true', default=False, help='Force to run jobs locally, not on cluster')
 parser.add_argument('--scripts_dir', '-S', default='/cip0/research/pvh/software/sanbi-scripts', help='Location of pvh sanbi-scripts')
 parser.add_argument('--modules_home', '-M', default='/cip0/software/x86_64/modules/Modules/3.2.9', help='Value of Environment Modules MODULESHOME env variable')
@@ -36,6 +37,9 @@ parser.add_argument('--db_prefix', default='', help='Prefix to prepend to databa
 parser.add_argument('--db_hostname', '-H', default='localhost', help='Hostname of database to use for bp_seqfeature_load')
 parser.add_argument('--db_username', '-U', required=True, help='Username to log into database for bp_seqfeature_load')
 parser.add_argument('--db_password', '-P', required=True, help='Password to log into database for bp_seqfeature_load')
+parser.add_argument('--exonerate_upstream', default=3000, type=int)
+parser.add_argument('--exonerate_downstream', default=3000, type=int)
+parser.add_argument('--extra_exonerate_args', default=None, type=str)
 parser.add_argument('genome_filename', help='FASTA format genome file, must end in .fa or .fasta')
 parser.add_argument('query_filename', help='FASTA format file of query sequences, must end in .fa or .fasta')
 args = parser.parse_args()
@@ -155,7 +159,10 @@ def run_exonerate(input_file, output_file, genome_filename, query_filename):
 	twobit_filename = FASTA_RE_COMPILED.sub('.2bit', genome_filename)
 	job_name = input_file.replace('.genblastA.gff3', '.sge')
 	job = 'run_est_mapping.py --query_type {}'.format(args.query_type)
-	job += ' --upstream 3000 --downstream 3000 --mapper exonerate --save_mapper_output --augustus_hints'
+	job += ' --upstream {} --downstream {} --mapper exonerate --save_mapper_output --augustus_hints'.format(
+		   args.exonerate_upstream, args.exonerate_downstream)
+	if args.extra_exonerate_args:
+		job += '--extra_mapper_args "{}"'.format(args.extra_exonerate_args)
 	job += ' {} {} {} {}'.format(query_filename, input_file, twobit_filename, output_file)
 	job_queue = 'all.q'
 	job_env = dict(PATH=PATH_val, PYTHONPATH=PYTHONPATH_val)
@@ -183,7 +190,7 @@ if args.printout:
 else:
 	pipeline_run([load_genblastA_db], multiprocess=args.num_threads)
 	# can't use multithread with a DRMAA task, causes script to hang
-	pipeline_run([load_exonerate_db], multithread=args.num_threads)
+	pipeline_run([load_exonerate_db], multithread=args.num_jobs)
 
 if not args.run_local:
 	drmaa_session.exit()
