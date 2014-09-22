@@ -33,6 +33,7 @@ parser.add_argument('--modules_home', '-M', default='/cip0/software/x86_64/modul
 parser.add_argument('--query_type', default='dna', choices=['dna','protein'], help='exonerate query type (dna or protein)')
 parser.add_argument('--debug', action='store_true', default=False, help='Set log level to DEBUG')
 parser.add_argument('--printout', action='store_true', default=False, help='Print what will be run, but do not run anything')
+parser.add_argument('--load_database', action='store_true', default=False, help='Load results into MySQL database')
 parser.add_argument('--db_prefix', default='', help='Prefix to prepend to database names (e.g. project name)')
 parser.add_argument('--db_hostname', '-H', default='localhost', help='Hostname of database to use for bp_seqfeature_load')
 parser.add_argument('--db_username', '-U', required=True, help='Username to log into database for bp_seqfeature_load')
@@ -188,9 +189,13 @@ if args.printout:
 	pipeline_printout()
 	pipeline_printout_graph('exonerate_ruffus.jpg', output_format='jpg', pipeline_name='Exonerate')
 else:
-	pipeline_run([load_genblastA_db], multiprocess=args.num_threads)
+	pipeline_run([merge_genblastA_gff3], multiprocess=args.num_threads)
+	if args.load_database:
+		pipeline_run([load_genblastA_db])
 	# can't use multithread with a DRMAA task, causes script to hang
-	pipeline_run([load_exonerate_db], multithread=args.num_jobs)
+	pipeline_run([merge_exonerate_gff3], multithread=args.num_jobs)
+	if args.load_database:
+		pipeline_run([load_exonerate_db])
 
 if not args.run_local:
 	drmaa_session.exit()
