@@ -163,7 +163,7 @@ def run_exonerate(input_file, output_file, genome_filename, query_filename):
 	job += ' --upstream {} --downstream {} --mapper exonerate --save_mapper_output --augustus_hints'.format(
 		   args.exonerate_upstream, args.exonerate_downstream)
 	if args.extra_exonerate_args:
-		job += '--extra_mapper_args "{}"'.format(args.extra_exonerate_args)
+		job += ' --extra_mapper_args "{}"'.format(args.extra_exonerate_args)
 	job += ' {} {} {} {}'.format(query_filename, input_file, twobit_filename, output_file)
 	job_queue = 'all.q'
 	job_env = dict(PATH=PATH_val, PYTHONPATH=PYTHONPATH_val)
