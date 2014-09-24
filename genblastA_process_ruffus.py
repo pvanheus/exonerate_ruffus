@@ -190,12 +190,10 @@ if args.printout:
 	pipeline_printout_graph('exonerate_ruffus.jpg', output_format='jpg', pipeline_name='Exonerate')
 else:
 	pipeline_run([merge_genblastA_gff3], multiprocess=args.num_threads)
-	if args.load_database:
-		pipeline_run([load_genblastA_db])
 	# can't use multithread with a DRMAA task, causes script to hang
 	pipeline_run([merge_exonerate_gff3], multithread=args.num_jobs)
 	if args.load_database:
-		pipeline_run([load_exonerate_db])
+		pipeline_run([load_genblastA_db, load_exonerate_db])
 
 if not args.run_local:
 	drmaa_session.exit()
