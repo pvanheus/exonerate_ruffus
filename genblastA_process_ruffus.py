@@ -202,6 +202,7 @@ else:
 	pipeline_run([merge_genblastA_gff3], multiprocess=args.num_threads)
 	# can't use multithread with a DRMAA task, causes script to hang
 	pipeline_run([merge_exonerate_gff3], multithread=args.num_jobs)
+	pipeline_run([write_augustus_hints], multiprocess=args.num_threads)
 	if args.load_database:
 		pipeline_run([load_genblastA_db, load_exonerate_db])
 
