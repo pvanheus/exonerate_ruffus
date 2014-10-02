@@ -52,6 +52,7 @@ else:
 logger = logging.getLogger('genblastA_process_ruffus')
 
 sys.path.append(args.scripts_dir) # this is where scripts like genblastA_to_gff are stored
+sys.path.append(os.path.join(args.scripts_dir, 'lib')) # this is used for the gff3 parser
 from genblastA_to_gff.genblastA_to_gff3 import genblastA_process
 from make_augustus_hints.make_augustus_hints import gff3_to_hints
 
@@ -179,7 +180,6 @@ def run_exonerate(input_file, output_file, genome_filename, query_filename):
 def merge_exonerate_gff3(infiles, output_file):
 	merge_gff(infiles, output_file)
 
-sys.path.append(os.path.join(args.scripts_dir, 'lib')) # this is used for the gff3 parser
 @transform(merge_exonerate_gff3, 
 	       suffix('.gff3'),
 	       suffix('.hints'),
