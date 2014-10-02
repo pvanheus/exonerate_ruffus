@@ -182,7 +182,7 @@ def merge_exonerate_gff3(infiles, output_file):
 @transform(merge_exonerate_gff3, 
 	       suffix('.gff3'),
 	       suffix('.hints'),
-	       args.query_type):
+	       args.query_type)
 def write_augustus_hints(input_filename, output_filename, query_type):
 	input_file = safe_open(input_filename)
 	output_file = safe_open(output_filename)
