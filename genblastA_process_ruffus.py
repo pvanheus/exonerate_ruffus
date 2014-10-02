@@ -179,6 +179,7 @@ def run_exonerate(input_file, output_file, genome_filename, query_filename):
 def merge_exonerate_gff3(infiles, output_file):
 	merge_gff(infiles, output_file)
 
+sys.path.append(os.path.join(args.scripts_dir, 'lib')) # this is used for the gff3 parser
 @transform(merge_exonerate_gff3, 
 	       suffix('.gff3'),
 	       suffix('.hints'),
@@ -202,7 +203,6 @@ else:
 	pipeline_run([merge_genblastA_gff3], multiprocess=args.num_threads)
 	# can't use multithread with a DRMAA task, causes script to hang
 	pipeline_run([merge_exonerate_gff3], multithread=args.num_jobs)
-	print "now run augustus_hints generation"
 	pipeline_run([write_augustus_hints], multiprocess=args.num_threads)
 	if args.load_database:
 		pipeline_run([load_genblastA_db, load_exonerate_db])
