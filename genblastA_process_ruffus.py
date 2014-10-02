@@ -180,7 +180,7 @@ def run_exonerate(input_file, output_file, genome_filename, query_filename):
 def merge_exonerate_gff3(infiles, output_file):
 	merge_gff(infiles, output_file)
 
-@transform(merge_exonerate_gff3, 
+@transform('exonerate.all.gff3', 
 	       suffix('.gff3'),
 	       suffix('.hints'),
 	       args.query_type)
@@ -189,7 +189,7 @@ def write_augustus_hints(input_filename, output_filename, query_type):
 	output_file = safe_open(output_filename)
 	gff3_to_hints(input_file, out_file, hint_type=query_type)
 
-@transform(merge_exonerate_gff3,
+@transform('exonerate.all.gff3',
 	       suffix('.gff3'),
 	       '.log', args.db_prefix+'exonerate', args.db_hostname,
 	       args.db_username, args.db_password)
