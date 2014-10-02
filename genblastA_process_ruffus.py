@@ -125,7 +125,7 @@ def genblastA_to_gff3(input_file, output_file):
 def merge_genblastA_gff3(infiles, output_file):
 	merge_gff(infiles, output_file)
 
-@transform(merge_genblastA_gff3,
+@transform('genblastA.all.gff3',
 	       suffix('.gff3'),
 	       '.log', args.db_prefix+'genblastA', args.db_hostname,
 	       args.db_username, args.db_password)
