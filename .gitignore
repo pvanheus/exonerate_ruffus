@@ -1,0 +1,7 @@
+*.exonerate
+*.sqlite
+*.idx
+*.fa
+*.gff3
+*.out
+*.2bit
